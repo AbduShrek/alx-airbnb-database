@@ -13,3 +13,12 @@
 
 👉 Queries are available in [`subqueries.sql`](.database-adv-script
 /subqueries.sql).
+
+
+
+## SQL Aggregation & Window Functions
+
+- **Aggregation:** Count total bookings made by each user.  
+- **Window Function:** Rank properties by number of bookings using RANK().  
+
+👉 Queries are available in [`aggregations_and_window_functions.sql`](.database-adv-script/aggregations_and_window_functions.sql).
