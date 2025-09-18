@@ -1,15 +1,18 @@
--- Initial (naive) query: joins everything and returns duplicate rows when a booking has multiple payments
+-- Initial (naive) query: retrieves all bookings with joins
+-- Adds a WHERE with AND to simulate a common filter
 SELECT
-  b.*,                      -- pulls all booking columns (heavier than needed)
+  b.*,
   u.full_name, u.email,
   p.title, p.price_per_night,
   pay.id  AS payment_id, pay.status AS payment_status, pay.amount, pay.created_at AS payment_created_at
 FROM bookings   b
 JOIN users      u   ON u.id = b.guest_id
 JOIN properties p   ON p.id = b.property_id
-LEFT JOIN payments  pay ON pay.booking_id = b.id;
+LEFT JOIN payments  pay ON pay.booking_id = b.id
+WHERE b.status = 'confirmed'
+  AND p.price_per_night > 50;
 
--- Analyze performance (run both before and after refactor)
+-- Analyze performance (before/after refactor)
 EXPLAIN ANALYZE
 SELECT
   b.*,
@@ -19,10 +22,11 @@ SELECT
 FROM bookings b
 JOIN users u      ON u.id = b.guest_id
 JOIN properties p ON p.id = b.property_id
-LEFT JOIN payments pay ON pay.booking_id = b.id;
+LEFT JOIN payments pay ON pay.booking_id = b.id
+WHERE b.status = 'confirmed'
+  AND p.price_per_night > 50;
 
--- Refactor 1: select only needed columns + avoid row blow-up from multiple payments
--- Pick the latest payment per booking using DISTINCT ON (PostgreSQL)
+-- Refactored query: trim columns + get latest payment only
 WITH latest_payment AS (
   SELECT DISTINCT ON (booking_id)
          id, booking_id, status, amount, created_at
@@ -39,10 +43,6 @@ FROM bookings b
 JOIN users u           ON u.id = b.guest_id
 JOIN properties p      ON p.id = b.property_id
 LEFT JOIN latest_payment lp ON lp.booking_id = b.id
+WHERE b.status = 'confirmed'
+  AND p.price_per_night > 50
 ORDER BY b.created_at DESC;
-
--- (Optional) Refactor 2: if you frequently filter by recent bookings, pre-filter to shrink work
--- WITH recent_bookings AS (
---   SELECT * FROM bookings WHERE created_at >= NOW() - INTERVAL '90 days'
--- )
--- SELECT ... FROM recent_bookings rb ...
