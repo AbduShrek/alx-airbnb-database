@@ -6,7 +6,8 @@ INNER JOIN users u ON b.guest_id = u.id;
 
 SELECT p.id AS property_id, p.title, r.id AS review_id, r.rating, r.comment
 FROM properties p
-LEFT JOIN reviews r ON p.id = r.property_id;
+LEFT JOIN reviews r ON p.id = r.property_id
+ORDER BY p.id, r.id;
 
 
 
